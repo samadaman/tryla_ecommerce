@@ -11,16 +11,19 @@ export default function Home() {
     <div className="font-sans">
       <Header />
       <BelowNavLinks />
-      <div className="container mx-auto px-4">
-      <div className="relative h-[600px] w-full">
-        <Image
-          src="/images/banner.png"
-          alt="Fashion Banner"
-          fill
-          className="object-cover rounded-2xl"
-          priority
-        />
-      </div>
+      <div className="container mx-auto px-4 my-5 md:my-20 lg:my-16">
+        <div className="w-full overflow-hidden">
+          <div className="relative w-full aspect-[16/6] md:aspect-[16/6] lg:aspect-[16/6]">
+            <Image
+              src="/images/banner.png"
+              alt="Fashion Banner"
+              fill
+              className="object-cover w-full h-full rounded-2xl"
+              priority
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 100vw, 100vw"
+            />
+          </div>
+        </div>
       </div>
 
       <BrandsExplore />

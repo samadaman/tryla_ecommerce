@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import { featuredProducts } from '../data/products';
 import { FiStar, FiShoppingCart, FiHeart } from 'react-icons/fi';
+import Link from 'next/link';
 
 const ProductCard = ({ product }) => {
   return (
@@ -36,12 +37,10 @@ const ProductCard = ({ product }) => {
           )}
         </div>
         <div className="flex justify-between items-center mb-4">
-          <div className="flex items-center">
-            <span className="text-sm text-gray-600">In Stock</span>
-          </div>
+         
           <div className="flex items-center">
             <span className="text-sm text-gray-600">Sizes:</span>
-            <div className="ml-2 flex space-x-1">
+            <div className="ml-2 flex flex-wrap gap-1 md:flex-nowrap md:space-x-1">
               {product.sizes.slice(0, 3).map((size) => (
                 <span key={size} className="text-xs text-gray-500">{size}</span>
               ))}
@@ -68,9 +67,20 @@ const FeaturedProducts = () => {
         </div>
         
         <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-6">
-          {featuredProducts.slice(0, 9).map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
+          {featuredProducts.slice(0, 9).map((product) => {
+            // Create a URL-friendly slug from the product name
+            const slug = product.name
+              .toLowerCase()
+              .replace(/[^\w\s-]/g, '') // Remove special characters
+              .replace(/\s+/g, '-')      // Replace spaces with hyphens
+              .replace(/-+/g, '-');       // Replace multiple hyphens with single hyphen
+            
+            return (
+              <Link href={`/products/${slug}-${product.id}`} className="hover:opacity-75 transition-opacity" target='_blank' key={product.id}>
+                <ProductCard product={product} />
+              </Link>
+            );
+          })}
         </div>
 
         <div className="text-center mt-8">
