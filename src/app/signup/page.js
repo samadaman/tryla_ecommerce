@@ -13,6 +13,8 @@ export default function SignupPage() {
     password: '',
     confirmPassword: ''
   });
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -20,16 +22,55 @@ export default function SignupPage() {
       ...prev,
       [name]: value
     }));
+    if (error) setError('');
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Handle signup logic here
+    
     if (formData.password !== formData.confirmPassword) {
-      alert("Passwords don't match!");
+      setError("Passwords don't match!");
       return;
     }
-    console.log('Signup attempt with:', formData);
+
+    if (formData.password.length < 6) {
+      setError("Password must be at least 6 characters long");
+      return;
+    }
+
+    setError('');
+    setIsLoading(true);
+
+    try {
+      const response = await fetch('http://localhost:4000/auth/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          password: formData.password
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Signup failed');
+      }
+
+      localStorage.setItem('user', JSON.stringify(data.user));
+      localStorage.setItem('token', data.token);
+      
+      window.location.href = '/';
+      
+    } catch (err) {
+      setError(err.message || 'An error occurred during signup');
+      console.error('Signup error:', err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -96,11 +137,18 @@ export default function SignupPage() {
               <div className="pt-2">
                 <button
                   type="submit"
-                  className="w-full py-3 cursor-pointer bg-black text-white font-medium rounded-md hover:bg-gray-800 transition-colors"
+                  disabled={isLoading}
+                  className={`w-full py-3 cursor-pointer bg-black text-white font-medium rounded-md hover:bg-gray-800 transition-colors ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
                 >
-                  Create account
+                  {isLoading ? 'Creating account...' : 'Create account'}
                 </button>
               </div>
+              
+              {error && (
+                <div className="text-red-500 text-sm text-center mt-2">
+                  {error}
+                </div>
+              )}
               
               <div className="text-center text-sm text-gray-500 pt-4">
                 <span>Already have an account? </span>
