@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { FaStar, FaShoppingCart, FaHeart, FaChevronLeft, FaChevronRight, FaExpand, FaTimes } from 'react-icons/fa';
-import { featuredProducts } from '@/data/products';
 import { useCart } from '@/context/CartContext';
+import { getProductById } from '@/utils/api';
 
 // Skeleton Loader Component
 const ProductDetailsSkeleton = () => (
@@ -72,14 +72,29 @@ const ProductDetails = ({ productId }) => {
   const [selectedSize, setSelectedSize] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState('description');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const { addToCart } = useCart();
 
   useEffect(() => {
-    const foundProduct = featuredProducts.find(p => p.id === parseInt(productId));
-    if (foundProduct) {
-      setProduct(foundProduct);
-      setSelectedColor(foundProduct.colors?.[0] || '');
-      setSelectedSize(foundProduct.sizes?.[0] || '');
+    const fetchProduct = async () => {
+      try {
+        setLoading(true);
+        const data = await getProductById(productId);
+        setProduct(data);
+        setSelectedColor(data.colors?.[0] || '');
+        setSelectedSize(data.sizes?.[0] || '');
+        setError(null);
+      } catch (err) {
+        console.error('Failed to fetch product:', err);
+        setError('Failed to load product. Please try again later.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (productId) {
+      fetchProduct();
     }
   }, [productId]);
 
@@ -108,7 +123,9 @@ const ProductDetails = ({ productId }) => {
     });
   };
 
-  if (!product) return <ProductDetailsSkeleton />;
+  if (loading) return <ProductDetailsSkeleton />;
+  if (error) return <div className="container mx-auto px-4 py-8 text-center text-red-500">{error}</div>;
+  if (!product) return <div className="container mx-auto px-4 py-8 text-center">Product not found</div>;
 
   const currentImage = product.images?.[currentImageIndex] || product.image;
 

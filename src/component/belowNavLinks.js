@@ -18,14 +18,15 @@ const BelowNavLinks = () => {
   ];
 
   return (
-    <div className="hidden md:block bg-gray-50 border-t border-b border-gray-200">
-      <div className="container mx-auto px-4">
-        <div className="flex flex-wrap md:flex-nowrap justify-center space-x-4 md:space-x-8 py-2 md:py-4">
-          {links.map((link, index) => (
+    <div className="bg-gray-50 border-t border-b border-gray-200">
+      <div className="max-w-7xl mx-auto px-2 sm:px-4">
+        {/* On small screens: horizontal scroll, On large: centered */}
+        <div className="flex space-x-4 sm:space-x-6 py-2 sm:py-3 overflow-x-auto scrollbar-hide md:justify-center">
+          {links.map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className="whitespace-nowrap text-gray-600 hover:text-gray-800 transition-colors px-2 md:px-0"
+              className="flex-shrink-0 whitespace-nowrap text-gray-600 hover:text-gray-800 transition-colors px-2 sm:px-0 text-sm sm:text-base"
             >
               {link.text}
             </Link>

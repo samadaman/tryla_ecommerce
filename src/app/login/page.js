@@ -6,14 +6,13 @@ import Header from '@/component/header';
 import BelowNavLinks from '@/component/belowNavLinks';
 import Footer from '@/component/footer';
 
-
-
-
 export default function LoginPage() {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
   });
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -21,12 +20,46 @@ export default function LoginPage() {
       ...prev,
       [name]: value
     }));
+    // Clear error when user types
+    if (error) setError('');
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Handle login logic here
-    console.log('Login attempt with:', formData);
+    setError('');
+    setIsLoading(true);
+
+    try {
+      const response = await fetch('http://localhost:4000/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Login failed');
+      }
+
+      // Save user data and token to localStorage
+      localStorage.setItem('user', JSON.stringify(data.user));
+      localStorage.setItem('token', data.token);
+      
+      // Redirect to home page after successful login
+      window.location.href = '/';
+      
+    } catch (err) {
+      setError(err.message || 'An error occurred during login');
+      console.error('Login error:', err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -69,11 +102,18 @@ export default function LoginPage() {
             <div className="pt-2">
               <button
                 type="submit"
-                className="w-full py-3 cursor-pointer bg-black text-white font-medium  rounded-md hover:bg-gray-800 transition-colors"
+                disabled={isLoading}
+                className={`w-full py-3 cursor-pointer bg-black text-white font-medium rounded-md hover:bg-gray-800 transition-colors ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
               >
-                Sign in
+                {isLoading ? 'Signing in...' : 'Sign in'}
               </button>
             </div>
+            
+            {error && (
+              <div className="text-red-500 text-sm text-center mt-2">
+                {error}
+              </div>
+            )}
             
             <div className="text-center text-sm text-gray-500">
               <span>Don't have an account? </span>

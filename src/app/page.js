@@ -1,7 +1,7 @@
 import Image from "next/image";
 import BelowNavLinks from "../component/belowNavLinks";
 import Header from "../component/header";
-import BrandsExplore from "../component/brandsExplore";
+import CategoriesExplore from "../component/categoriesExplore";
 import FeaturedProducts from "../component/featuredProducts";
 import ProductSlider from "../component/productSlider";
 import Footer from "../component/footer";
@@ -26,7 +26,7 @@ export default function Home() {
         </div>
       </div>
 
-      <BrandsExplore />
+      <CategoriesExplore />
       <FeaturedProducts />
       <ProductSlider />
       <Footer />
