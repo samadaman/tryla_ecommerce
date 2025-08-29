@@ -41,7 +41,29 @@ export async function getProducts() {
 }
 
 export async function getProductById(id) {
-  return fetchAPI(`/products/${id}`);
+  try {
+    console.log(`Fetching product with ID: ${id}`);
+    const response = await fetch(`${API_BASE_URL}/products/${id}`);
+    
+    if (!response.ok) {
+      const error = new Error(`HTTP error! status: ${response.status}`);
+      error.status = response.status;
+      throw error;
+    }
+    
+    const data = await response.json();
+    console.log('API Response:', data);
+    
+    // Handle case where the API returns { ok: true, data: {...} }
+    if (data && data.ok && data.data) {
+      return data.data;
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Error in getProductById:', error);
+    throw error;
+  }
 }
 
 export async function getFeaturedProducts() {

@@ -1,174 +1,172 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { FiBox, FiUsers, FiShoppingCart, FiDollarSign, FiPieChart, FiSettings, FiMenu, FiX } from 'react-icons/fi';
-import styles from './admin.module.css';
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { FaBox, FaShoppingCart, FaList, FaPlusCircle, FaTags, FaClipboardList, FaUsers, FaSpinner } from 'react-icons/fa';
 
-const AdminDashboard = () => {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [dashboardData, setDashboardData] = useState({
-    totalSales: 0,
-    totalOrders: 0,
-    totalProducts: 0,
-    totalCustomers: 0,
-    recentOrders: [],
-    salesData: []
+export default function AdminPage() {
+  const router = useRouter();
+  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null);
+  const [stats, setStats] = useState({
+    products: 0,
+    productsInStock: 0,
+    orders: 0,
+    loading: true
   });
 
   useEffect(() => {
-    // In a real app, fetch this data from your API
+    const storedUser = localStorage.getItem('user');
+    if (!storedUser) {
+      router.push('/login');
+      return;
+    }
+
+    try {
+      const parsedUser = JSON.parse(storedUser);
+      setUser(parsedUser);
+
+      if (parsedUser.role !== "ADMIN") {
+        router.push("/");
+        return;
+      }
+    } catch (err) {
+      console.error("Error parsing user from localStorage:", err);
+      router.push("/login");
+    } finally {
+      setLoading(false);
+    }
+  }, [router]);
+
+  useEffect(() => {
     const fetchData = async () => {
-      // Mock data - replace with actual API calls
-      const mockData = {
-        totalSales: 45231.89,
-        totalOrders: 1289,
-        totalProducts: 342,
-        totalCustomers: 856,
-        recentOrders: [
-          { id: 1, customer: 'John Doe', amount: 129.99, status: 'Completed' },
-          { id: 2, customer: 'Jane Smith', amount: 89.50, status: 'Processing' },
-          { id: 3, customer: 'Robert Johnson', amount: 245.00, status: 'Shipped' },
-        ],
-        salesData: [
-          { month: 'Jan', sales: 4000 },
-          { month: 'Feb', sales: 3000 },
-          { month: 'Mar', sales: 5000 },
-          { month: 'Apr', sales: 2780 },
-          { month: 'May', sales: 1890 },
-          { month: 'Jun', sales: 2390 },
-        ]
-      };
-      setDashboardData(mockData);
+      try {
+        setStats(prev => ({ ...prev, loading: true }));
+        
+        // Fetch products
+        const productsRes = await fetch('http://localhost:4000/products');
+        const productsData = await productsRes.json();
+
+        
+        // Debug: Log the first few products if they exist
+        if (productsData.data && Array.isArray(productsData.data)) {
+          console.log('First product:', productsData.data[0]);
+          console.log('Number of products:', productsData.data.length);
+        }
+        
+        // Fetch orders
+        const ordersRes = await fetch('http://localhost:4000/orders');
+        const ordersData = await ordersRes.json();
+        
+        // Calculate total products in stock
+        const totalProductsInStock = productsData.data?.reduce(
+          (total, product) => total + (parseInt(product.stock) || 0), 
+          0
+        );
+
+        setStats({
+          products: productsData.data?.length || 0,
+          productsInStock: totalProductsInStock,
+          orders: ordersData.data?.length || 0,
+          loading: false
+        });
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        setStats(prev => ({ ...prev, loading: false }));
+      }
     };
 
     fetchData();
   }, []);
 
-  const toggleSidebar = () => {
-    setIsSidebarOpen(!isSidebarOpen);
-  };
+  if (loading) {
+    return <div className="flex items-center justify-center h-screen">Loading...</div>;
+  }
 
   return (
-    <div className={styles.adminLayout}>
-      {/* Sidebar */}
-      <aside className={`${styles.sidebar} ${isSidebarOpen ? styles.open : ''}`}>
-        <div className={styles.logo}>Tryla Admin</div>
-        <nav className={styles.nav}>
-          <Link href="/admin" className={styles.navLink}>
-            <FiPieChart /> <span>Dashboard</span>
-          </Link>
-          <Link href="/admin/products" className={styles.navLink}>
-            <FiBox /> <span>Products</span>
-          </Link>
-          <Link href="/admin/orders" className={styles.navLink}>
-            <FiShoppingCart /> <span>Orders</span>
-          </Link>
-          <Link href="/admin/customers" className={styles.navLink}>
-            <FiUsers /> <span>Customers</span>
-          </Link>
-          <Link href="/admin/settings" className={styles.navLink}>
-            <FiSettings /> <span>Settings</span>
-          </Link>
-        </nav>
-      </aside>
-
-      {/* Main Content */}
-      <main className={styles.mainContent}>
-        <header className={styles.header}>
-          <button className={styles.menuButton} onClick={toggleSidebar}>
-            {isSidebarOpen ? <FiX /> : <FiMenu />}
+    <div className="p-6">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-800 mb-2">Welcome back, {user?.name || 'Admin'}! 👋</h1>
+        <p className="text-gray-600">Here's what's happening with your store today.</p>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-500">Total Products</p>
+              {stats.loading ? (
+                <FaSpinner className="animate-spin text-blue-500 mt-2" />
+              ) : (
+                <p className="text-2xl font-bold text-gray-800">{stats.products}</p>
+              )}
+            </div>
+            <div className="p-3 bg-blue-50 rounded-lg">
+              <FaBox className="text-blue-600 text-xl" />
+            </div>
+          </div>
+        </div>
+        
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-500">Products in Stock</p>
+              {stats.loading ? (
+                <FaSpinner className="animate-spin text-green-500 mt-2" />
+              ) : (
+                <p className="text-2xl font-bold text-gray-800">{stats.productsInStock}</p>
+              )}
+            </div>
+            <div className="p-3 bg-green-50 rounded-lg">
+              <FaShoppingCart className="text-green-600 text-xl" />
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-gray-500">Total Orders</p>
+            {stats.loading ? (
+              <FaSpinner className="animate-spin text-yellow-500 mt-2" />
+            ) : (
+              <p className="text-2xl font-bold text-gray-800">{stats.orders}</p>
+            )}
+          </div>
+          <div className="p-3 bg-yellow-50 rounded-lg">
+            <FaClipboardList className="text-yellow-600 text-xl" />
+          </div>
+        </div>
+      </div>
+      
+      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+        <h2 className="text-lg font-semibold text-gray-800 mb-4">Quick Actions</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <button 
+            onClick={() => router.push('/admin/products/new')}
+            className="flex items-center justify-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            <FaPlusCircle className="text-blue-500 mr-2" />
+            Add Product
           </button>
-          <h1>Dashboard</h1>
-          <div className={styles.userProfile}>
-            <span>Admin User</span>
-            <div className={styles.avatar}>AU</div>
-          </div>
-        </header>
-
-        {/* Stats Grid */}
-        <div className={styles.statsGrid}>
-          <div className={styles.statCard}>
-            <div className={styles.statIcon} style={{ backgroundColor: 'rgba(52, 211, 153, 0.1)' }}>
-              <FiDollarSign style={{ color: '#10B981' }} />
-            </div>
-            <div className={styles.statInfo}>
-              <span className={styles.statLabel}>Total Sales</span>
-              <span className={styles.statValue}>${dashboardData.totalSales.toLocaleString()}</span>
-            </div>
-          </div>
-
-          <div className={styles.statCard}>
-            <div className={styles.statIcon} style={{ backgroundColor: 'rgba(99, 102, 241, 0.1)' }}>
-              <FiShoppingCart style={{ color: '#6366F1' }} />
-            </div>
-            <div className={styles.statInfo}>
-              <span className={styles.statLabel}>Total Orders</span>
-              <span className={styles.statValue}>{dashboardData.totalOrders}</span>
-            </div>
-          </div>
-
-          <div className={styles.statCard}>
-            <div className={styles.statIcon} style={{ backgroundColor: 'rgba(236, 72, 153, 0.1)' }}>
-              <FiBox style={{ color: '#EC4899' }} />
-            </div>
-            <div className={styles.statInfo}>
-              <span className={styles.statLabel}>Total Products</span>
-              <span className={styles.statValue}>{dashboardData.totalProducts}</span>
-            </div>
-          </div>
-
-          <div className={styles.statCard}>
-            <div className={styles.statIcon} style={{ backgroundColor: 'rgba(245, 158, 11, 0.1)' }}>
-              <FiUsers style={{ color: '#F59E0B' }} />
-            </div>
-            <div className={styles.statInfo}>
-              <span className={styles.statLabel}>Total Customers</span>
-              <span className={styles.statValue}>{dashboardData.totalCustomers}</span>
-            </div>
-          </div>
+          <button 
+            onClick={() => router.push('/admin/orders')}
+            className="flex items-center justify-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            <FaClipboardList className="text-yellow-500 mr-2" />
+            View Orders
+          </button>
+          <button 
+            className="flex items-center justify-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+            disabled
+            title="Coming soon"
+          >
+            <FaUsers className="text-purple-500 mr-2" />
+            Manage Users
+          </button>
         </div>
-
-        {/* Recent Orders */}
-        <div className={styles.card}>
-          <div className={styles.cardHeader}>
-            <h2>Recent Orders</h2>
-            <Link href="/admin/orders" className={styles.viewAllLink}>View All</Link>
-          </div>
-          <div className={styles.tableContainer}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th>Order ID</th>
-                  <th>Customer</th>
-                  <th>Amount</th>
-                  <th>Status</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {dashboardData.recentOrders.map((order) => (
-                  <tr key={order.id}>
-                    <td>#{order.id}</td>
-                    <td>{order.customer}</td>
-                    <td>${order.amount}</td>
-                    <td>
-                      <span className={`${styles.statusBadge} ${styles[order.status.toLowerCase()]}`}>
-                        {order.status}
-                      </span>
-                    </td>
-                    <td>
-                      <button className={styles.actionButton}>View</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </main>
+      </div>
     </div>
   );
-};
-
-export default AdminDashboard;
+}

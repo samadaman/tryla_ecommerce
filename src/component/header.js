@@ -3,14 +3,14 @@
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { FiMenu, FiX, FiSearch, FiShoppingCart, FiUser } from 'react-icons/fi';
+import CategoriesDropdown from './CategoriesDropdown';
 
 const navigationLinks = [
-  { href: '/shop', label: 'Categories' },
   { href: '/Fashion', label: 'Fashion' },
   { href: '/Newlook', label: 'Newlook' },
   { href: '/about', label: 'Brands' },
-  { href: '/shop', label: 'Shop' },
-  { href: '/about', label: 'About' },
+  { href: '/shop Store', label: 'Shop' },
+  { href: '/aboutUs', label: 'About' },
 ];
 
 const Header = () => {
@@ -54,7 +54,8 @@ const Header = () => {
           </Link>
 
           {/* Desktop Nav */}
-          <div className="hidden lg:flex items-center space-x-4 xl:space-x-6">
+          <div className="hidden lg:flex items-center text-gray-600 hover:text-gray-800 font-medium space-x-4 xl:space-x-6">
+            <CategoriesDropdown />
             {navigationLinks.map((link) => (
               <Link
                 key={link.href}
@@ -166,6 +167,7 @@ const Header = () => {
               <p className="text-xs text-gray-500">{user.email}</p>
             </div>
           )}
+          <CategoriesDropdown />
           {navigationLinks.map((link) => (
             <Link
               key={link.href}
