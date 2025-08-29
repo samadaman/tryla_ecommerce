@@ -1,51 +1,40 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { featuredProducts } from '../data/products';
-import { FiStar, FiShoppingCart, FiHeart } from 'react-icons/fi';
+import { FiHeart } from 'react-icons/fi';
 import Link from 'next/link';
 
 const ProductCard = ({ product }) => {
   return (
-    <div className="bg-body rounded-md  overflow-hidden hover:shadow-lg transition-shadow">
+    <div className="bg-body rounded-md overflow-hidden hover:shadow-lg transition-shadow">
       <div className="relative">
-        <div className="absolute top-3 right-3 bg-body rounded-full p-2">
+        <div className="absolute top-3 right-3 bg-white rounded-full p-2">
           <FiHeart className="text-gray-500 hover:text-red-500 transition-colors" />
         </div>
-        {product.isNew && (
-          <div className="absolute top-3 left-3 bg-green-500 text-white px-3 py-1 rounded-full text-xs font-semibold">
-            New
-          </div>
-        )}
         <div className="relative w-full aspect-[4/4]">
           <Image
-            src={product.image}
-            alt={product.name}
+            src={product.images?.[0] || '/placeholder.jpg'}
+            alt={product.title}
             fill
             className="object-cover"
           />
         </div>
       </div>
       <div className="p-4">
-        <div className="flex items-center mb-2">
-        </div>
-        <h3 className="text-lg text-gray-800 font-semibold mb-2 line-clamp-2">{product.name}</h3>
+        <h3 className="text-lg text-gray-800 font-semibold mb-2 line-clamp-2">{product.title}</h3>
         <div className="flex items-center mb-3">
-          <span className="text-xl font-bold text-gray-600">${product.price}</span>
-          {product.oldPrice && (
-            <span className="ml-2 text-sm text-gray-500 line-through">${product.oldPrice}</span>
-          )}
+          <span className="text-xl font-bold text-gray-600">₹{product.price}</span>
         </div>
-        <div className="flex justify-between items-center mb-4">
-         
+        <div className="flex items-center mb-4">
           <div className="flex items-center">
-            <span className="text-sm text-gray-600">Sizes:</span>
-            <div className="ml-2 flex flex-wrap gap-1 md:flex-nowrap md:space-x-1">
-              {product.sizes.slice(0, 3).map((size) => (
-                <span key={size} className="text-xs text-gray-500">{size}</span>
+            <span className="text-sm text-gray-600 mr-2">Sizes:</span>
+            <div className="flex flex-wrap gap-1">
+              {product.sizes?.slice(0, 3).map((size, index) => (
+                <span key={index} className="text-xs bg-gray-100 px-2 py-1 rounded">{size}</span>
               ))}
-              {product.sizes.length > 3 && (
-                <span className="text-xs text-gray-500">+{product.sizes.length - 3}</span>
+              {product.sizes?.length > 3 && (
+                <span className="text-xs text-gray-500 self-center">+{product.sizes.length - 3}</span>
               )}
             </div>
           </div>
@@ -56,6 +45,52 @@ const ProductCard = ({ product }) => {
 };
 
 const FeaturedProducts = () => {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const response = await fetch('http://localhost:4000/products');
+        if (!response.ok) {
+          throw new Error('Failed to fetch products');
+        }
+        const data = await response.json();
+        if (data.ok && Array.isArray(data.data)) {
+          setProducts(data.data);
+        }
+      } catch (err) {
+        setError(err.message);
+        console.error('Error fetching products:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="py-16 mt-5 text-center">
+        <div className="container mx-auto px-4">
+          <p>Loading products...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="py-16 mt-5 text-center">
+        <div className="container mx-auto px-4">
+          <p className="text-red-500">Error: {error}</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="py-16 mt-5">
       <div className="container mx-auto px-4">
@@ -67,22 +102,24 @@ const FeaturedProducts = () => {
         </div>
         
         <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-6">
-          {featuredProducts.slice(0, 9).map((product) => {
-            // Create a URL-friendly slug from the product name
-            const slug = product.name
+          {products.map((product) => {
+            const slug = product.title
               .toLowerCase()
-              .replace(/[^\w\s-]/g, '') // Remove special characters
-              .replace(/\s+/g, '-')      // Replace spaces with hyphens
-              .replace(/-+/g, '-');       // Replace multiple hyphens with single hyphen
+              .replace(/[^\w\s-]/g, '')
+              .replace(/\s+/g, '-')
+              .replace(/-+/g, '-');
             
             return (
-              <Link href={`/products/${slug}-${product.id}`} className="hover:opacity-75 transition-opacity" target='_blank' key={product.id}>
+              <Link 
+                href={`/products/${slug}-${product.id}`} 
+                className="hover:opacity-75 transition-opacity block" 
+                key={product.id}
+              >
                 <ProductCard product={product} />
               </Link>
             );
           })}
         </div>
-
         <div className="text-center mt-8">
           <button className="bg-gray-900 text-white px-8 py-3 rounded-full hover:bg-gray-800 transition-colors">
             See More Products
