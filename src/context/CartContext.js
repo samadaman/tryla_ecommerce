@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 
 const CartContext = createContext();
 
@@ -41,6 +42,7 @@ export function CartProvider({ children }) {
     } catch (err) {
       console.error('Error fetching cart:', err);
       setError(err.message);
+      toast.error('Failed to load cart. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -82,10 +84,12 @@ export function CartProvider({ children }) {
 
       // Refresh cart after successful addition
       await fetchCart();
+      toast.success('Item added to cart!');
       return { success: true, data };
     } catch (err) {
       console.error('Error adding to cart:', err);
       setError(err.message);
+      toast.error(err.message || 'Failed to add item to cart');
       return { success: false, error: err.message };
     } finally {
       setLoading(false);
@@ -111,9 +115,11 @@ export function CartProvider({ children }) {
       }
 
       await fetchCart();
+      toast.success('Item removed from cart');
     } catch (err) {
       console.error('Error removing from cart:', err);
       setError(err.message);
+      toast.error('Failed to remove item from cart');
     } finally {
       setLoading(false);
     }
@@ -140,9 +146,11 @@ export function CartProvider({ children }) {
       }
 
       await fetchCart();
+      toast.success('Cart updated');
     } catch (err) {
       console.error('Error updating quantity:', err);
       setError(err.message);
+      toast.error('Failed to update cart');
     } finally {
       setLoading(false);
     }
@@ -167,9 +175,11 @@ export function CartProvider({ children }) {
       }
 
       setCart([]);
+      toast.success('Cart cleared');
     } catch (err) {
       console.error('Error clearing cart:', err);
       setError(err.message);
+      toast.error('Failed to clear cart');
     } finally {
       setLoading(false);
     }

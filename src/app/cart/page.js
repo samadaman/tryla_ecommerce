@@ -96,14 +96,39 @@ export default function CartPage() {
     }
   };
 
-  const handleCheckoutComplete = (orderData) => {
-    // Handle successful checkout
-    console.log('Checkout completed:', orderData);
-    // You can redirect to order confirmation page or show success message
-    alert('Order placed successfully!');
-    setIsCheckoutOpen(false);
-    // Optionally clear the cart or update UI
-    fetchCart();
+  const handleCheckoutComplete = async (orderData) => {
+    try {
+      // Clear the cart after successful payment
+      const token = localStorage.getItem('token');
+      if (token) {
+        await fetch('http://localhost:4000/cart/clear', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+      }
+      
+      // Update the UI to show empty cart
+      setCartData({
+        items: [],
+        summary: {
+          subtotal: 0,
+          shipping: 0,
+          total: 0
+        }
+      });
+      
+      setIsCheckoutOpen(false);
+      
+      // Show success message or redirect to order confirmation
+    } catch (error) {
+      console.error('Error clearing cart after payment:', error);
+      // Even if clearing cart fails, we still want to close the modal
+      setIsCheckoutOpen(false);
+      alert('Order placed successfully! There was an issue clearing your cart. Please contact support if items still appear in your cart.');
+    }
   };
 
   useEffect(() => {

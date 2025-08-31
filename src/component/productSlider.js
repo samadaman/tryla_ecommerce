@@ -1,7 +1,6 @@
 'use client';
 
 import Image from 'next/image';
-import { featuredProducts } from '../data/products';
 import { FiHeart, FiShoppingCart } from 'react-icons/fi';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination, Autoplay } from 'swiper/modules';
@@ -9,12 +8,70 @@ import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 import Link from 'next/link';
+import { useState, useEffect } from 'react';
 
 const createSlug = (name, id) => {
   return `${name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}-${id}`;
 };
 
 const ProductSlider = () => {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const response = await fetch('http://localhost:4000/products');
+        if (!response.ok) {
+          throw new Error('Failed to fetch products');
+        }
+        const result = await response.json();
+        if (result.ok && Array.isArray(result.data)) {
+          // Map the API response to match our component's expected structure
+          const formattedProducts = result.data.map(product => ({
+            id: product.id,
+            name: product.title,
+            price: parseFloat(product.price) / 100, // Convert from cents to dollars
+            image: product.images?.[0] || '/placeholder-product.jpg',
+            isNew: product.availability === 'IN_STOCK',
+            // Add any other mappings needed
+          }));
+          setProducts(formattedProducts);
+        } else {
+          throw new Error('Invalid response format');
+        }
+      } catch (err) {
+        console.error('Error fetching products:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="py-16 mt-16 text-center">
+        <div className="container mx-auto px-4 mt-5">
+          <p>Loading products...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="py-16 mt-16 text-center">
+        <div className="container mx-auto px-4 mt-5">
+          <p className="text-red-500">Error: {error}</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="py-16 mt-16">
       <div className="container mx-auto px-4 mt-5">
@@ -52,7 +109,7 @@ const ProductSlider = () => {
           }}
           className="mySwiper"
         >
-          {featuredProducts.slice(0, 9).map((product) => {
+          {products.slice(0, 9).map((product) => {
             const slug = createSlug(product.name, product.id);
             return (
               <SwiperSlide key={product.id}>
@@ -77,6 +134,9 @@ const ProductSlider = () => {
                         width={400}
                         height={600}
                         className="w-full h-[600px] object-cover"
+                        onError={(e) => {
+                          e.target.src = '/placeholder-product.jpg';
+                        }}
                       />
                     </div>
                     <div className="p-4">
@@ -87,10 +147,6 @@ const ProductSlider = () => {
                           {product.oldPrice && (
                             <span className="text-gray-400 line-through ml-2">${product.oldPrice.toFixed(2)}</span>
                           )}
-                        </div>
-                        <div className="flex items-center">
-                          {/* <StarIcon className="h-4 w-4 text-yellow-400" />
-                          <span className="ml-1 text-sm text-gray-600">{product.rating}</span> */}
                         </div>
                       </div>
                     </div>
@@ -104,16 +160,5 @@ const ProductSlider = () => {
     </div>
   );
 };
-
-// const StarIcon = (props) => (
-//   <svg
-//     xmlns="http://www.w3.org/2000/svg"
-//     viewBox="0 0 20 20"
-//     fill="currentColor"
-//     {...props}
-//   >
-//     <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-//   </svg>
-// );
 
 export default ProductSlider;
