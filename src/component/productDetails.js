@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { FaStar, FaShoppingCart, FaHeart, FaChevronLeft, FaChevronRight, FaExpand, FaTimes } from 'react-icons/fa';
 import { useCart } from '@/context/CartContext';
 import { getProductById } from '@/utils/api';
+import toast from 'react-hot-toast';
 
 // Skeleton Loader Component
 const ProductDetailsSkeleton = () => (
@@ -165,13 +166,13 @@ const ProductDetails = () => {
       console.log('Add to cart response:', result);
       
       if (result?.success) {
-        alert('Product added to cart!');
+        toast.success('Product added to cart!');
       } else {
         throw new Error(result?.error || 'Failed to add to cart');
       }
     } catch (error) {
       console.error('Error in handleAddToCart:', error);
-      alert(error.message || 'An error occurred while adding to cart');
+      toast.error(error.message || 'An error occurred while adding to cart');
     } finally {
       setIsAddingToCart(false);
     }
