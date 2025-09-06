@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { FiMenu, FiX, FiSearch, FiShoppingCart, FiUser } from 'react-icons/fi';
 import CategoriesDropdown from './CategoriesDropdown';
+import { useRouter, usePathname } from 'next/navigation';
 
 const navigationLinks = [
   { href: '/Fashion', label: 'Fashion' },
@@ -17,6 +18,9 @@ const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [user, setUser] = useState(null);
+  const router = useRouter();
+  const pathname = usePathname();
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     // Check for user in localStorage on component mount
@@ -40,6 +44,19 @@ const Header = () => {
     localStorage.removeItem('token');
     setUser(null);
     window.location.href = '/';
+  };
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      handleSearch(e);
+    }
   };
 
   return (
@@ -71,12 +88,23 @@ const Header = () => {
           <div className="hidden lg:flex items-center space-x-4">
             {/* Search */}
             <div className="relative w-40 xl:w-56">
-              <input
-                type="text"
-                placeholder="Search..."
-                className="w-full px-4 py-2 text-sm border rounded-full pr-10 text-gray-600"
-              />
-              <FiSearch className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <form onSubmit={handleSearch}>
+                <input
+                  type="text"
+                  placeholder="Search..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  className="w-full px-4 py-2 text-sm border rounded-full pr-10 text-gray-600"
+                />
+                <button 
+                  type="submit"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  aria-label="Search"
+                >
+                  <FiSearch />
+                </button>
+              </form>
             </div>
 
             {/* Cart */}

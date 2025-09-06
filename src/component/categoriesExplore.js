@@ -2,16 +2,26 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+import { CategoryIcon } from '../utils/categoryIcons';
 
 const CategoryCard = ({ category }) => {
   const [imageError, setImageError] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const router = useRouter();
   
   // This would be replaced with actual image URL from your API when available
   const imageUrl = category.image || '';
   
+  const handleCategoryClick = () => {
+    router.push(`/search?category=${encodeURIComponent(category.name)}`);
+  };
+  
   return (
-    <div className="group relative overflow-hidden rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 bg-body">
+    <div 
+      className="group relative overflow-hidden rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 bg-body cursor-pointer"
+      onClick={handleCategoryClick}
+    >
       <div className="relative h-48 bg-gray-100 flex items-center justify-center">
         {!imageError && imageUrl ? (
           <>
@@ -30,10 +40,8 @@ const CategoryCard = ({ category }) => {
             )}
           </>
         ) : (
-          <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center">
-            <span className="text-4xl font-bold text-gray-400">
-              {category.name.charAt(0).toUpperCase()}
-            </span>
+          <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center text-gray-400">
+            <CategoryIcon category={category.name} className="w-16 h-16" />
           </div>
         )}
       </div>
@@ -41,7 +49,13 @@ const CategoryCard = ({ category }) => {
         <h3 className="text-xl font-bold text-gray-800 mb-2 capitalize">{category.name}</h3>
         <div className="flex justify-between items-center">
           <span className="text-sm text-gray-500">{category.productsCount || '0'} products</span>
-          <button className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full text-sm font-medium transition-colors duration-200">
+          <button 
+            className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full text-sm font-medium transition-colors duration-200"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleCategoryClick();
+            }}
+          >
             Explore
           </button>
         </div>
@@ -74,14 +88,21 @@ const CategoriesExplore = () => {
     const fetchCategories = async () => {
       try {
         const response = await fetch('http://localhost:4000/categories');
+        const result = await response.json();
+        
         if (!response.ok) {
-          throw new Error('Failed to fetch categories');
+          throw new Error(result.message || 'Failed to fetch categories');
         }
-        const data = await response.json();
-        setCategories(data);
+
+        // Handle the nested data structure
+        const categoriesData = result.data || [];
+        console.log('Categories data:', categoriesData);
+        
+        setCategories(Array.isArray(categoriesData) ? categoriesData : []);
       } catch (err) {
-        setError(err.message);
         console.error('Error fetching categories:', err);
+        setError(err.message || 'Failed to load categories');
+        setCategories([]);
       } finally {
         setLoading(false);
       }

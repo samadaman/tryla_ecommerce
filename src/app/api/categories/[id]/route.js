@@ -10,7 +10,7 @@ export async function GET(request, { params }) {
       });
     }
 
-    const categories = await response.json();
+    const { data: categories } = await response.json();
     const category = categories.find(cat => cat.id === id);
 
     if (!category) {
