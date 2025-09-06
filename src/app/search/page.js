@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams, useRouter, usePathname } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { FiChevronLeft, FiFilter, FiGrid, FiList, FiChevronDown, FiStar, FiShoppingBag } from 'react-icons/fi';
+import { FiFilter, FiGrid, FiList, FiChevronLeft, FiShoppingBag } from 'react-icons/fi';
 import Header from '@/component/header';
 
 // Skeleton Loader Component
@@ -18,100 +18,103 @@ const ProductCardSkeleton = () => (
   </div>
 );
 
-export default function CategoryPage() {
-  const { categoryId } = useParams();
-  const router = useRouter();
-  const pathname = usePathname();
-  const [products, setProducts] = useState([]);
-  const [category, setCategory] = useState(null);
+export default function SearchPage() {
+  const searchParams = useSearchParams();
+  const query = searchParams.get('q') || '';
+  const category = searchParams.get('category') || '';
+  const [allProducts, setAllProducts] = useState([]);
+  const [filteredProducts, setFilteredProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
+  const [viewMode, setViewMode] = useState('grid');
   const [filters, setFilters] = useState({
     sort: 'featured',
     availability: 'all',
     priceRange: 'all',
   });
   const [showFilters, setShowFilters] = useState(false);
+  const [categoryName, setCategoryName] = useState('');
 
-  // Fetch data
+  // Fetch products based on search query or category
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchProducts = async () => {
       try {
         setLoading(true);
+        setError('');
         
-        // Fetch category details
-        const categoryResponse = await fetch(`http://localhost:4000/categories/${categoryId}`);
-        if (!categoryResponse.ok) throw new Error('Category not found');
-        const categoryData = await categoryResponse.json();
-        setCategory(categoryData);
-
-        // Fetch all products
-        const productsResponse = await fetch('http://localhost:4000/products');
-        if (!productsResponse.ok) throw new Error('Failed to fetch products');
-        
-        const productsData = await productsResponse.json();
-        const filteredProducts = productsData.data?.filter(
-          product => product.categoryId === categoryId
-        ) || [];
-        
-        // Apply filters
-        let sortedProducts = [...filteredProducts];
-        
-        // Sort products
-        if (filters.sort === 'price-low-high') {
-          sortedProducts.sort((a, b) => a.price - b.price);
-        } else if (filters.sort === 'price-high-low') {
-          sortedProducts.sort((a, b) => b.price - a.price);
-        } else if (filters.sort === 'name-asc') {
-          sortedProducts.sort((a, b) => a.title.localeCompare(b.title));
+        let url = 'http://localhost:4000/products';
+        if (category) {
+          url = `http://localhost:4000/products?category=${encodeURIComponent(category)}`;
+          setCategoryName(category);
+        } else if (query) {
+          url = `http://localhost:4000/products?search=${encodeURIComponent(query)}`;
         }
 
-        // Apply availability filter
-        if (filters.availability === 'in-stock') {
-          sortedProducts = sortedProducts.filter(p => p.stock > 0);
-        } else if (filters.availability === 'low-stock') {
-          sortedProducts = sortedProducts.filter(p => p.stock > 0 && p.stock <= 5);
-        }
-
-        // Apply price range filter
-        if (filters.priceRange !== 'all') {
-          const [min, max] = filters.priceRange.split('-').map(Number);
-          sortedProducts = sortedProducts.filter(product => {
-            const price = Number(product.price);
-            if (filters.priceRange === '10000') {
-              return price >= 10000;
-            }
-            return price >= min && price <= max;
-          });
-        }
-
-        setProducts(sortedProducts);
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Failed to fetch products');
         
+        const data = await response.json();
+        setAllProducts(data.data || []);
       } catch (err) {
-        console.error('Error:', err);
-        setError(err.message || 'Failed to load category');
+        console.error('Error fetching products:', err);
+        setError('Failed to load products. Please try again later.');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchData();
-  }, [categoryId, filters]);
+    fetchProducts();
+  }, [query, category]);
+
+  // Filter and sort products based on search query and filters
+  useEffect(() => {
+    if (!allProducts.length) return;
+
+    let results = [...allProducts];
+    
+    // Apply search query (client-side fallback)
+    if (query && !category) {
+      const searchTerm = query.toLowerCase();
+      results = results.filter(product => 
+        product.title?.toLowerCase().includes(searchTerm) ||
+        (product.description && product.description.toLowerCase().includes(searchTerm)) ||
+        (product.category?.name && product.category.name.toLowerCase().includes(searchTerm))
+      );
+    }
+
+    // Apply availability filter
+    if (filters.availability === 'in-stock') {
+      results = results.filter(p => p.stock > 0);
+    } else if (filters.availability === 'low-stock') {
+      results = results.filter(p => p.stock > 0 && p.stock <= 5);
+    }
+    
+    // Apply price range filter
+    if (filters.priceRange !== 'all') {
+      const [min, max] = filters.priceRange.split('-').map(Number);
+      results = results.filter(product => {
+        const price = Number(product.price);
+        if (filters.priceRange === '10000') return price >= 10000;
+        return price >= min && price <= max;
+      });
+    }
+
+    // Apply sorting
+    if (filters.sort === 'price-low-high') {
+      results.sort((a, b) => a.price - b.price);
+    } else if (filters.sort === 'price-high-low') {
+      results.sort((a, b) => b.price - a.price);
+    } else if (filters.sort === 'name-asc') {
+      results.sort((a, b) => a.title.localeCompare(b.title));
+    }
+
+    setFilteredProducts(results);
+  }, [allProducts, query, filters]);
 
   const handleFilterChange = (filter, value) => {
     setFilters(prev => ({
       ...prev,
       [filter]: value
-    }));
-  };
-
-  const getBreadcrumbs = () => {
-    const paths = pathname.split('/').filter(Boolean);
-    return paths.map((path, index) => ({
-      name: path.charAt(0).toUpperCase() + path.slice(1).replace(/-/g, ' '),
-      path: `/${paths.slice(0, index + 1).join('/')}`,
-      current: index === paths.length - 1
     }));
   };
 
@@ -121,10 +124,10 @@ export default function CategoryPage() {
         <Header />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="text-center py-12">
-            <h1 className="text-2xl font-bold text-gray-900 mb-4">Error Loading Category</h1>
+            <h1 className="text-2xl font-bold text-gray-900 mb-4">Error Loading Results</h1>
             <p className="text-gray-600 mb-6">{error}</p>
             <button
-              onClick={() => router.back()}
+              onClick={() => window.history.back()}
               className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors flex items-center mx-auto"
             >
               <FiChevronLeft className="mr-1" /> Go Back
@@ -144,34 +147,17 @@ export default function CategoryPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between">
             <div>
-              <nav className="flex mb-4" aria-label="Breadcrumb">
-                <ol className="flex items-center space-x-2 text-sm">
-                  <li>
-                    <Link href="/" className="text-gray-200 hover:text-white">
-                      Home
-                    </Link>
-                  </li>
-                  <span className="text-gray-300">/</span>
-                  <li>
-                    <Link href="/categories" className="text-gray-200 hover:text-white">
-                      Categories
-                    </Link>
-                  </li>
-                  <span className="text-gray-300">/</span>
-                  <li className="text-white font-medium">
-                    {category?.name || 'Category'}
-                  </li>
-                </ol>
-              </nav>
-              <h1 className="text-3xl font-bold">{category?.name || 'Category'}</h1>
-              <p className="mt-2 text-gray-100 max-w-2xl">
-                {category?.description || 'Browse our collection of high-quality products'}
+              <h1 className="text-3xl font-bold mb-2">
+                {category ? `${categoryName} Collection` : query ? `Search Results for "${query}"` : 'All Products'}
+              </h1>
+              <p className="text-gray-100">
+                {filteredProducts.length} {filteredProducts.length === 1 ? 'result' : 'results'} found
               </p>
             </div>
-            <div className="mt-6 md:mt-0 text-gray-700 font-medium">
+            <div className="mt-6 md:mt-0 text-gray-700">
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className="cursor-pointer flex items-center px-4 py-2 bg-white bg-opacity-10 rounded-md hover:bg-opacity-20 transition-colors"
+                className="flex items-center px-4 py-2 bg-white bg-opacity-10 rounded-md hover:bg-opacity-20 transition-colors"
               >
                 <FiFilter className="mr-2" />
                 {showFilters ? 'Hide Filters' : 'Show Filters'}
@@ -183,10 +169,12 @@ export default function CategoryPage() {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Filters and Sorting */}
-        <div className="mb-8 bg-white rounded-lg shadow-sm p-4">
+        <div className="mb-8 bg-white rounded-lg shadow-sm p-4 text-gray-700">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between">
             <div className="flex items-center space-x-4 mb-4 md:mb-0">
-              <span className="text-sm text-gray-500">{products.length} {products.length === 1 ? 'item' : 'items'}</span>
+              <span className="text-sm text-gray-500">
+                {filteredProducts.length} {filteredProducts.length === 1 ? 'item' : 'items'}
+              </span>
               <button 
                 onClick={() => setViewMode('grid')} 
                 className={`p-2 rounded-md ${viewMode === 'grid' ? 'bg-gray-50 text-gray-600' : 'text-gray-500 hover:bg-gray-100'}`}
@@ -202,7 +190,7 @@ export default function CategoryPage() {
                 <FiList size={20} />
               </button>
             </div>
-            <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4 text-gray-700">
+            <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
               <div className="relative">
                 <select
                   value={filters.sort}
@@ -233,7 +221,7 @@ export default function CategoryPage() {
           {showFilters && (
             <div className="mt-6 pt-6 border-t border-gray-200">
               <h3 className="text-lg font-medium text-gray-900 mb-4">Filters</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-gray-500">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Price Range</label>
                   <select
@@ -248,7 +236,6 @@ export default function CategoryPage() {
                     <option value="10000">Over ₹10,000</option>
                   </select>
                 </div>
-                {/* Add more filter options here */}
               </div>
             </div>
           )}
@@ -261,12 +248,12 @@ export default function CategoryPage() {
               <ProductCardSkeleton key={i} />
             ))}
           </div>
-        ) : products.length > 0 ? (
+        ) : filteredProducts.length > 0 ? (
           <div className={viewMode === 'grid' 
             ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6' 
             : 'space-y-4'}
           >
-            {products.map((product) => (
+            {filteredProducts.map((product) => (
               <div 
                 key={product.id} 
                 className={`bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-300 ${
@@ -296,19 +283,16 @@ export default function CategoryPage() {
                             {product.title}
                           </Link>
                         </h3>
-                        <div>
-                        <p className="text-gray-600 text-sm mb-3">
-  Sizes: {product.sizes?.join(', ') || 'One Size'}
-</p>
-                        </div>
+                        <p className="text-gray-600 text-sm">
+                          {product.category?.name || 'Uncategorized'}
+                        </p>
                       </div>
-                      <button className="p-2 cursor-pointer text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-50">
+                      <button className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-50">
                         <FiShoppingBag className="h-5 w-5" />
-                        <Link href={`/products/${product.id}`}></Link>
                       </button>
                     </div>
                     
-                    <p className="text-gray-600 font-semibold text-lg mb-3">
+                    <p className="text-gray-600 font-semibold text-lg mt-2">
                       ₹{product.price.toLocaleString('en-IN')}
                       {product.originalPrice && (
                         <span className="ml-2 text-sm text-gray-500 line-through">
@@ -318,40 +302,22 @@ export default function CategoryPage() {
                     </p>
                   </div>
                   
-                  <div className="mt-auto">
-                    {(() => {
-                      if (product.availability === 'IN_STOCK' || product.stock > 5) {
-                        return (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                            <span className="w-2 h-2 bg-blue-500 rounded-full mr-1.5"></span>
-                            In Stock
-                          </span>
-                        );
-                      } else if (product.availability === 'OUT_OF_STOCK' || product.stock <= 0) {
-                        return (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                            <span className="w-2 h-2 bg-red-500 rounded-full mr-1.5"></span>
-                            Out of Stock
-                          </span>
-                        );
-                      } else if (product.stock > 0 && product.stock <= 5) {
-                        return (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                            <span className="w-2 h-2 bg-yellow-500 rounded-full mr-1.5"></span>
-                            Only {product.stock} left
-                          </span>
-                        );
-                      }
-                      return (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                          {product.availability}
-                        </span>
-                      );
-                    })()}
+                  <div className="mt-4">
+                    {product.stock > 0 ? (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        <span className="w-2 h-2 bg-blue-500 rounded-full mr-1.5"></span>
+                        In Stock
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                        <span className="w-2 h-2 bg-red-500 rounded-full mr-1.5"></span>
+                        Out of Stock
+                      </span>
+                    )}
                     
-                    {viewMode === 'list' && (
+                    {viewMode === 'list' && product.description && (
                       <p className="mt-3 text-sm text-gray-500 line-clamp-2">
-                        {product.description || 'No description available for this product.'}
+                        {product.description}
                       </p>
                     )}
                   </div>
@@ -366,7 +332,9 @@ export default function CategoryPage() {
             </div>
             <h3 className="text-lg font-medium text-gray-900 mb-2">No products found</h3>
             <p className="text-gray-500 mb-6 max-w-md mx-auto">
-              We couldn't find any products matching your criteria. Try adjusting your filters or browse our full collection.
+              {query 
+                ? `We couldn't find any products matching "${query}". Try adjusting your search or filters.`
+                : 'Please enter a search term to find products.'}
             </p>
             <div className="space-x-3">
               <button
