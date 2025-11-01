@@ -1,13 +1,15 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { Suspense, useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import Header from '@/component/header';
 import { FiUser, FiPackage, FiClock, FiCheckCircle, FiTruck, FiLogOut, FiEdit2, FiInfo, FiX } from 'react-icons/fi';
 
-export default function ProfilePage() {
-  const router = useRouter();
+// Client component that uses searchParams
+function ProfileContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const [user, setUser] = useState(null);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -526,5 +528,13 @@ export default function ProfilePage() {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function ProfilePage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+      <ProfileContent />
+    </Suspense>
   );
 }
