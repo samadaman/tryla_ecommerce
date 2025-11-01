@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "classnames": "^2.5.1",
     "framer-motion": "^12.23.12",
     "jwt-decode": "^4.0.0",
     "lottie-react": "^2.4.1",

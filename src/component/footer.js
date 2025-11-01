@@ -10,7 +10,7 @@ const Footer = () => {
           
           {/* Column 1 - Company Info */}
           <div>
-            <h3 className="text-2xl font-bold mb-6">Tryla</h3>
+            <h3 className="text-2xl font-bold mb-6">Kryla</h3>
             <p className="text-gray-400 mb-4">
               Your one-stop destination for fashion essentials. Shop the latest trends and styles.
             </p>
@@ -42,7 +42,7 @@ const Footer = () => {
             <div className="space-y-2">
               <div className="flex items-center text-gray-400">
                 <FiMail className="w-5 h-5 mr-2" />
-                <span>support@tryla.com</span>
+                <span>support@Kryla.com</span>
               </div>
               <div className="flex items-center text-gray-400">
                 <FiPhone className="w-5 h-5 mr-2" />
@@ -143,7 +143,7 @@ const Footer = () => {
         {/* Bottom Bar */}
         <div className="border-t border-gray-800 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center">
-            <p className="text-gray-400"> 2025 Tryla. All rights reserved.</p>
+            <p className="text-gray-400"> 2025 Kryla. All rights reserved.</p>
             <div className="flex space-x-4 mt-4 md:mt-0">
               <a href="/terms" className="text-gray-400 hover:text-white transition-colors">Terms</a>
               <a href="/privacy" className="text-gray-400 hover:text-white transition-colors">Privacy</a>
