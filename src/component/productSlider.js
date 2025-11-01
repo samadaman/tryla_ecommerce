@@ -33,7 +33,7 @@ const ProductSlider = () => {
             id: product.id,
             name: product.title,
             price: parseFloat(product.price) / 100, // Convert from cents to dollars
-            image: product.images?.[0] || '/placeholder-product.jpg',
+            image: product.images?.[0] || '/images/dress1.jpg',
             isNew: product.availability === 'IN_STOCK',
             // Add any other mappings needed
           }));
@@ -135,7 +135,7 @@ const ProductSlider = () => {
                         height={600}
                         className="w-full h-[600px] object-cover"
                         onError={(e) => {
-                          e.target.src = '/placeholder-product.jpg';
+                          e.target.src = '/images/dress1.jpg';
                         }}
                       />
                     </div>
