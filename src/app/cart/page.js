@@ -205,6 +205,7 @@ export default function CartPage() {
                     
                   </div>
                   <p className="text-gray-600">₹{(item.product.price).toFixed(2)}</p>
+                  <p className="font-normal">Size: {item.size}</p>
                   <p className="text-sm text-gray-500 mt-1">Quantity: {item.quantity}</p>
                 </div>
                 <div className="mt-4 md:mt-0 text-right text-gray-600">

@@ -10,7 +10,7 @@ const Footer = () => {
           
           {/* Column 1 - Company Info */}
           <div>
-            <h3 className="text-2xl font-bold mb-6">Kryla</h3>
+            <h3 className="text-2xl font-bold mb-6">Krylaa</h3>
             <p className="text-gray-400 mb-4">
               Your one-stop destination for fashion essentials. Shop the latest trends and styles.
             </p>
@@ -42,7 +42,7 @@ const Footer = () => {
             <div className="space-y-2">
               <div className="flex items-center text-gray-400">
                 <FiMail className="w-5 h-5 mr-2" />
-                <span>support@Kryla.com</span>
+                <span>support@krylaa.com</span>
               </div>
               <div className="flex items-center text-gray-400">
                 <FiPhone className="w-5 h-5 mr-2" />
@@ -69,7 +69,7 @@ const Footer = () => {
                 <a href="/shipping" className="text-gray-400 hover:text-white transition-colors">Shipping Info</a>
               </li>
               <li>
-                <a href="/returns" className="text-gray-400 hover:text-white transition-colors">Returns Policy</a>
+                <a href="/return-policy" className="text-gray-400 hover:text-white transition-colors">Returns Policy</a>
               </li>
               <li>
                 <a href="/privacy" className="text-gray-400 hover:text-white transition-colors">Privacy Policy</a>
@@ -143,8 +143,8 @@ const Footer = () => {
         {/* Bottom Bar */}
         <div className="border-t border-gray-800 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center">
-            <p className="text-gray-400"> 2025 Kryla. All rights reserved.</p>
-            <div className="flex space-x-4 mt-4 md:mt-0">
+            <p className="text-gray-400 text-sm"> 2025 Kryla. All rights reserved.</p>
+            <div className="flex space-x-4 mt-4 md:mt-0 text-sm">
               <a href="/terms" className="text-gray-400 hover:text-white transition-colors">Terms</a>
               <a href="/privacy" className="text-gray-400 hover:text-white transition-colors">Privacy</a>
               <a href="/cookies" className="text-gray-400 hover:text-white transition-colors">Cookies</a>
