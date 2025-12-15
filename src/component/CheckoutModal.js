@@ -43,8 +43,7 @@ const CheckoutModal = ({ isOpen, onClose, onComplete, orderTotal }) => {
       const orderData = {
         shippingAddress: formData.address,
         recipientName: formData.name,
-        recipientPhone: formData.phone,
-        paymentMethod: formData.paymentMethod === 'cod' ? 'CASH_ON_DELIVERY' : 'ONLINE'
+        recipientPhone: formData.phone
       };
 
       const token = localStorage.getItem('token');
@@ -53,8 +52,23 @@ const CheckoutModal = ({ isOpen, onClose, onComplete, orderTotal }) => {
         return;
       }
 
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Make actual API call to create order
+      const response = await fetch('http://localhost:4000/orders/checkout', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(orderData)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to create order');
+      }
+
+      const orderResult = await response.json();
+      console.log('Order created successfully:', orderResult);
       
       // Show success animation
       setOrderSuccess(true);
@@ -62,7 +76,7 @@ const CheckoutModal = ({ isOpen, onClose, onComplete, orderTotal }) => {
       // Call onComplete after a delay to show the animation
       setTimeout(() => {
         if (onComplete) {
-          onComplete({});
+          onComplete(orderResult);
         }
         onClose();
         // Reset state when modal closes

@@ -54,7 +54,7 @@ export function CartProvider({ children }) {
   }, []);
 
   // Add to cart function
-  const addToCart = async (productId, quantity = 1) => {
+  const addToCart = async (productId, quantity = 1, size = '') => {
     const token = getAuthToken();
     if (!token) {
       // Redirect to login or show login modal
@@ -62,18 +62,29 @@ export function CartProvider({ children }) {
       return { success: false, error: 'Not authenticated' };
     }
 
+    // Validate size parameter
+    if (!size || size.trim() === '') {
+      return { success: false, error: 'Size is required' };
+    }
+
     try {
       setLoading(true);
+      
+      const requestBody = {
+        productId: productId,  
+        quantity: Number(quantity),
+        size: size.trim()
+      };
+      
+      console.log('Sending request to cart API:', requestBody);
+      
       const response = await fetch(API_URL, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          productId: productId,  
-          quantity: Number(quantity)
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       const data = await response.json();

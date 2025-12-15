@@ -152,16 +152,25 @@ const ProductDetails = () => {
   const handleAddToCart = async () => {
     if (!product) return;
     
+    // Validate that a size is selected
+    if (!selectedSize || selectedSize.trim() === '') {
+      toast.error('Please select a size');
+      return;
+    }
+    
     try {
-      console.log('Attempting to add to cart:', { 
+      const cartData = { 
         productId: product.id, 
-        quantity 
-      });
+        quantity,
+        size: selectedSize.trim()
+      };
+      
+      console.log('Sending cart data:', cartData);
       
       setIsAddingToCart(true);
       
-      // Only pass productId and quantity to addToCart
-      const result = await addToCart(product.id, quantity);
+      // Pass productId, quantity, and size to addToCart
+      const result = await addToCart(product.id, quantity, selectedSize.trim());
       
       console.log('Add to cart response:', result);
       
